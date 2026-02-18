@@ -1,5 +1,5 @@
 {
-  "name": "Pump Diario",
+  "name": "Pump Diário",
   "description": "An application to create and track weightlifting workout routines. Users can define custom workout plans with specific exercises, sets, reps, and rest times, and then log their completed sessions to monitor their progress.",
   "requestFramePermissions": []
 }

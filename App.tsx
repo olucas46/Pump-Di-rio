@@ -6,7 +6,7 @@ import WorkoutCreator from './components/WorkoutCreator';
 import WorkoutLogger from './components/WorkoutLogger';
 import WorkoutHistory from './components/WorkoutHistory';
 import Evolution from './components/Evolution';
-import { BarbellIcon, ClipboardListIcon, HistoryIcon, PlusIcon, ChartBarIcon } from './components/Icons';
+import { BarbellIcon, ClipboardListIcon, HistoryIcon, PlusIcon, ChartBarIcon, BoltIcon } from './components/Icons';
 
 type View = 'creator' | 'logger' | 'history' | 'evolution';
 
@@ -146,18 +146,28 @@ const App: React.FC = () => {
       <div className="max-w-5xl mx-auto p-4 sm:p-6 relative z-10">
         {/* Hero Header */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-                <div className="absolute inset-0 bg-sky-500 blur-lg opacity-20 rounded-full"></div>
-                <div className="relative bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-xl">
-                    <BarbellIcon className="h-8 w-8 text-sky-400" />
+          <div className="flex items-center gap-5">
+            {/* New Logo Composition */}
+            <div className="relative group cursor-default">
+                {/* Back Glow */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-emerald-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                
+                {/* Card */}
+                <div className="relative flex items-center justify-center w-14 h-14 bg-slate-900 rounded-xl border border-slate-800/50 shadow-2xl overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-emerald-500/10"></div>
+                    
+                    {/* Icons */}
+                    <BarbellIcon className="h-7 w-7 text-white z-10 relative drop-shadow-md" strokeWidth={2.5} />
+                    <BoltIcon className="h-4 w-4 text-emerald-400 absolute bottom-2 right-2 z-20 drop-shadow-md" fill="currentColor" />
                 </div>
             </div>
+
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight">
-                Pump Diário
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight leading-none">
+                Pump<span className="text-sky-500">Diário</span>
               </h1>
-              <p className="text-sm text-sky-400/80 font-medium tracking-wide uppercase flex items-center gap-2">
+              <p className="text-sm text-slate-400 font-medium tracking-wide uppercase flex items-center gap-2 mt-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 {formattedDate}
               </p>
