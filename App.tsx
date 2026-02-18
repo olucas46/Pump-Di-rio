@@ -1,236 +1,37 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { WorkoutPlan, WorkoutLog } from './types';
-import useLocalStorage from './hooks/useLocalStorage';
-import WorkoutCreator from './components/WorkoutCreator';
-import WorkoutLogger from './components/WorkoutLogger';
-import WorkoutHistory from './components/WorkoutHistory';
-import Evolution from './components/Evolution';
-import { BarbellIcon, ClipboardListIcon, HistoryIcon, PlusIcon, ChartBarIcon, BoltIcon } from './components/Icons';
-
-type View = 'creator' | 'logger' | 'history' | 'evolution';
+import React, { useState, useEffect } from 'react';
+import AuthScreen from './components/AuthScreen';
+import UserDashboard from './components/UserDashboard';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<View>('logger');
-  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
-  const [workoutPlans, setWorkoutPlans] = useLocalStorage<WorkoutPlan[]>('workoutPlans', []);
-  const [workoutLogs, setWorkoutLogs] = useLocalStorage<WorkoutLog[]>('workoutLogs', []);
-
-  // For Date and Time
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [user, setUser] = useState<string | null>(null);
 
   useEffect(() => {
-      const timer = setInterval(() => {
-          setCurrentDateTime(new Date());
-      }, 1000);
-      return () => clearInterval(timer);
+    // Check for existing session
+    const storedUser = localStorage.getItem('pump_currentUser');
+    if (storedUser) {
+      setUser(storedUser);
+    }
   }, []);
 
-  const formattedDate = currentDateTime.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-  });
-
-  const formattedTime = currentDateTime.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-  });
-
-  // For Motivational Phrase
-  const motivationalQuotes = useMemo(() => [
-      "A dor que você sente hoje é a força que você sentirá amanhã.",
-      "O corpo alcança o que a mente acredita.",
-      "A única má sessão de treino é aquela que não aconteceu.",
-      "Seja mais forte que sua melhor desculpa.",
-      "O suor é a gordura chorando.",
-      "A disciplina é a ponte entre metas e realizações."
-  ], []);
-
-  const motivationalQuote = useMemo(() => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)], [motivationalQuotes]);
-
-  const addWorkoutPlan = useCallback((plan: Omit<WorkoutPlan, 'id'>) => {
-    const newPlan = { ...plan, id: crypto.randomUUID() };
-    setWorkoutPlans(prevPlans => [...prevPlans, newPlan]);
-    setView('logger');
-  }, [setWorkoutPlans]);
-
-  const updateWorkoutPlan = useCallback((updatedPlan: WorkoutPlan) => {
-    setWorkoutPlans(prevPlans =>
-        prevPlans.map(p => (p.id === updatedPlan.id ? updatedPlan : p))
-    );
-    setEditingPlanId(null);
-    setView('logger');
-  }, [setWorkoutPlans]);
-
-  const addWorkoutLog = useCallback((log: WorkoutLog) => {
-    setWorkoutLogs(prevLogs => [log, ...prevLogs]);
-  }, [setWorkoutLogs]);
-  
-  const updateWorkoutLog = useCallback((logId: string, updates: Partial<Pick<WorkoutLog, 'comments' | 'rating'>>) => {
-    setWorkoutLogs(prevLogs =>
-      prevLogs.map(log =>
-        log.id === logId ? { ...log, ...updates } : log
-      )
-    );
-  }, [setWorkoutLogs]);
-
-
-  const deleteWorkoutPlan = useCallback((planId: string) => {
-    setWorkoutPlans(prevPlans => prevPlans.filter(p => p.id !== planId));
-  }, [setWorkoutPlans]);
-
-  const handleEditPlan = (planId: string) => {
-    setEditingPlanId(planId);
-    setView('creator');
+  const handleLogin = (username: string) => {
+    setUser(username);
+    localStorage.setItem('pump_currentUser', username);
   };
 
-  const changeView = (newView: View) => {
-    if (newView !== 'creator') {
-        setEditingPlanId(null);
-    }
-    setView(newView);
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('pump_currentUser');
+    // Also clear selection preference so next user starts fresh
+    localStorage.removeItem('lastSelectedPlanId'); 
   };
 
-  const handleNewPlanClick = () => {
-    setEditingPlanId(null);
-    setView('creator');
-  };
-
-  const renderView = () => {
-    const planToEdit = editingPlanId ? workoutPlans.find(p => p.id === editingPlanId) : undefined;
-    switch (view) {
-      case 'creator':
-        return <WorkoutCreator addWorkoutPlan={addWorkoutPlan} planToEdit={planToEdit} onPlanUpdated={updateWorkoutPlan} />;
-      case 'logger':
-        return <WorkoutLogger workoutPlans={workoutPlans} addWorkoutLog={addWorkoutLog} updateWorkoutLog={updateWorkoutLog} deleteWorkoutPlan={deleteWorkoutPlan} onEditPlan={handleEditPlan} />;
-      case 'history':
-        return <WorkoutHistory workoutLogs={workoutLogs} workoutPlans={workoutPlans} />;
-      case 'evolution':
-        return <Evolution workoutLogs={workoutLogs} />;
-      default:
-        return <WorkoutLogger workoutPlans={workoutPlans} addWorkoutLog={addWorkoutLog} updateWorkoutLog={updateWorkoutLog} deleteWorkoutPlan={deleteWorkoutPlan} onEditPlan={handleEditPlan} />;
-    }
-  };
-  
-  const NavButton: React.FC<{
-    active: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-    label: string;
-  }> = ({ active, onClick, children, label }) => (
-    <button
-      onClick={onClick}
-      className={`relative flex-1 group flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
-        active
-          ? 'text-white bg-slate-700 shadow-md shadow-slate-900/20'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-      }`}
-    >
-      <div className={`transition-transform duration-300 ${active ? 'scale-110 text-sky-400' : 'group-hover:scale-110'}`}>
-        {children}
-      </div>
-      <span className={`${active ? 'font-semibold' : 'font-normal'}`}>{label}</span>
-      {active && (
-        <span className="absolute bottom-1 w-1 h-1 bg-sky-400 rounded-full"></span>
-      )}
-    </button>
-  );
+  if (!user) {
+    return <AuthScreen onLogin={handleLogin} />;
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-sky-500/30 overflow-x-hidden relative">
-      {/* Background Ambient Glows */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-sky-600/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2"></div>
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none translate-y-1/2"></div>
-
-      <div className="max-w-5xl mx-auto p-4 sm:p-6 relative z-10">
-        {/* Hero Header */}
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-5">
-            {/* New Logo Composition */}
-            <div className="relative group cursor-default">
-                {/* Back Glow */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-emerald-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-                
-                {/* Card */}
-                <div className="relative flex items-center justify-center w-14 h-14 bg-slate-900 rounded-xl border border-slate-800/50 shadow-2xl overflow-hidden">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-emerald-500/10"></div>
-                    
-                    {/* Icons */}
-                    <BarbellIcon className="h-7 w-7 text-white z-10 relative drop-shadow-md" strokeWidth={2.5} />
-                    <BoltIcon className="h-4 w-4 text-emerald-400 absolute bottom-2 right-2 z-20 drop-shadow-md" fill="currentColor" />
-                </div>
-            </div>
-
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight leading-none">
-                Pump<span className="text-sky-500">Diário</span>
-              </h1>
-              <p className="text-sm text-slate-400 font-medium tracking-wide uppercase flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                {formattedDate}
-              </p>
-            </div>
-          </div>
-          <div className="text-right hidden md:block">
-            <p className="text-3xl font-mono font-bold text-slate-700">{formattedTime}</p>
-          </div>
-        </header>
-
-        {/* Motivational Quote Card */}
-        <div className="mb-8">
-            <div className="bg-slate-800/40 backdrop-blur-md border-l-4 border-sky-500 rounded-r-xl p-4 sm:p-5 shadow-lg border-y border-r border-slate-700/50">
-                <p className="text-slate-300 italic font-light text-lg">"{motivationalQuote}"</p>
-            </div>
-        </div>
-
-        {/* Main Navigation Area */}
-        <div className="sticky top-4 z-50 mb-6">
-            <div className="bg-slate-800/80 backdrop-blur-xl p-1.5 rounded-2xl border border-slate-700/50 shadow-2xl flex flex-col sm:flex-row gap-2">
-                <nav className="flex-1 flex bg-slate-900/50 rounded-xl p-1">
-                    <NavButton active={view === 'logger'} onClick={() => changeView('logger')} label="Treinar">
-                        <ClipboardListIcon className="h-5 w-5" />
-                    </NavButton>
-                    <NavButton active={view === 'history'} onClick={() => changeView('history')} label="Histórico">
-                        <HistoryIcon className="h-5 w-5" />
-                    </NavButton>
-                    <NavButton active={view === 'evolution'} onClick={() => changeView('evolution')} label="Evolução">
-                        <ChartBarIcon className="h-5 w-5" />
-                    </NavButton>
-                </nav>
-                <button 
-                    onClick={handleNewPlanClick}
-                    className="sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 active:scale-95 border border-emerald-400/20"
-                >
-                    <PlusIcon className="h-5 w-5"/>
-                    <span className="whitespace-nowrap">Novo Plano</span>
-                </button>
-            </div>
-        </div>
-
-        {/* View Content */}
-        <main className="animate-fade-in transition-all duration-300">
-            {renderView()}
-        </main>
-
-        <footer className="text-center mt-16 pb-6 text-slate-500 text-sm font-medium">
-            <p className="flex items-center justify-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
-                Feito com <span className="text-yellow-500 animate-bounce">💪</span> e React
-            </p>
-        </footer>
-      </div>
-      
-      <style>{`
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fade-in 0.4s ease-out forwards;
-        }
-      `}</style>
-    </div>
+    <UserDashboard currentUser={user} onLogout={handleLogout} />
   );
 };
 
