@@ -26,13 +26,15 @@ const App: React.FC = () => {
       return () => clearInterval(timer);
   }, []);
 
-  const formattedDateTime = currentDateTime.toLocaleString('pt-BR', {
+  const formattedDate = currentDateTime.toLocaleDateString('pt-BR', {
+      weekday: 'long',
       day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+      month: 'long',
+  });
+
+  const formattedTime = currentDateTime.toLocaleTimeString('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
   });
 
   // For Motivational Phrase
@@ -115,68 +117,109 @@ const App: React.FC = () => {
     active: boolean;
     onClick: () => void;
     children: React.ReactNode;
-  }> = ({ active, onClick, children }) => (
+    label: string;
+  }> = ({ active, onClick, children, label }) => (
     <button
       onClick={onClick}
-      className={`flex-1 sm:flex-none flex sm:flex-row flex-col items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors rounded-lg ${
+      className={`relative flex-1 group flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
         active
-          ? 'bg-sky-500 text-white'
-          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+          ? 'text-white bg-slate-700 shadow-md shadow-slate-900/20'
+          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
       }`}
     >
-      {children}
+      <div className={`transition-transform duration-300 ${active ? 'scale-110 text-sky-400' : 'group-hover:scale-110'}`}>
+        {children}
+      </div>
+      <span className={`${active ? 'font-semibold' : 'font-normal'}`}>{label}</span>
+      {active && (
+        <span className="absolute bottom-1 w-1 h-1 bg-sky-400 rounded-full"></span>
+      )}
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6">
-        <header className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <BarbellIcon className="h-8 w-8 text-sky-400" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Pump Diário
-            </h1>
+    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-sky-500/30 overflow-x-hidden relative">
+      {/* Background Ambient Glows */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-sky-600/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2"></div>
+      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none translate-y-1/2"></div>
+
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 relative z-10">
+        {/* Hero Header */}
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+                <div className="absolute inset-0 bg-sky-500 blur-lg opacity-20 rounded-full"></div>
+                <div className="relative bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-xl">
+                    <BarbellIcon className="h-8 w-8 text-sky-400" />
+                </div>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight">
+                Pump Diário
+              </h1>
+              <p className="text-sm text-sky-400/80 font-medium tracking-wide uppercase flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                {formattedDate}
+              </p>
+            </div>
           </div>
-          <div className="text-right text-sm text-slate-400 flex-shrink-0">
-            <p>{formattedDateTime}</p>
+          <div className="text-right hidden md:block">
+            <p className="text-3xl font-mono font-bold text-slate-700">{formattedTime}</p>
           </div>
         </header>
 
-        <div className="text-center mb-6 py-2">
-            <p className="text-slate-400 italic">"{motivationalQuote}"</p>
+        {/* Motivational Quote Card */}
+        <div className="mb-8">
+            <div className="bg-slate-800/40 backdrop-blur-md border-l-4 border-sky-500 rounded-r-xl p-4 sm:p-5 shadow-lg border-y border-r border-slate-700/50">
+                <p className="text-slate-300 italic font-light text-lg">"{motivationalQuote}"</p>
+            </div>
         </div>
 
-        <main>
-            <div className="bg-slate-800 p-2 rounded-xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg">
-                <div className="flex w-full sm:w-auto">
-                    <NavButton active={view === 'logger'} onClick={() => changeView('logger')}>
+        {/* Main Navigation Area */}
+        <div className="sticky top-4 z-50 mb-6">
+            <div className="bg-slate-800/80 backdrop-blur-xl p-1.5 rounded-2xl border border-slate-700/50 shadow-2xl flex flex-col sm:flex-row gap-2">
+                <nav className="flex-1 flex bg-slate-900/50 rounded-xl p-1">
+                    <NavButton active={view === 'logger'} onClick={() => changeView('logger')} label="Treinar">
                         <ClipboardListIcon className="h-5 w-5" />
-                        <span>Registrar Treino</span>
                     </NavButton>
-                    <NavButton active={view === 'history'} onClick={() => changeView('history')}>
+                    <NavButton active={view === 'history'} onClick={() => changeView('history')} label="Histórico">
                         <HistoryIcon className="h-5 w-5" />
-                        <span>Histórico</span>
                     </NavButton>
-                    <NavButton active={view === 'evolution'} onClick={() => changeView('evolution')}>
+                    <NavButton active={view === 'evolution'} onClick={() => changeView('evolution')} label="Evolução">
                         <ChartBarIcon className="h-5 w-5" />
-                        <span>Evolução</span>
                     </NavButton>
-                </div>
-                 <button 
+                </nav>
+                <button 
                     onClick={handleNewPlanClick}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors rounded-lg bg-emerald-600 text-white hover:bg-emerald-500">
+                    className="sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 active:scale-95 border border-emerald-400/20"
+                >
                     <PlusIcon className="h-5 w-5"/>
-                    <span>Novo Plano de Treino</span>
+                    <span className="whitespace-nowrap">Novo Plano</span>
                 </button>
             </div>
+        </div>
+
+        {/* View Content */}
+        <main className="animate-fade-in transition-all duration-300">
             {renderView()}
         </main>
 
-        <footer className="text-center mt-10 text-slate-500 text-sm">
-            <p>Feito com 💪 e React</p>
+        <footer className="text-center mt-16 pb-6 text-slate-500 text-sm font-medium">
+            <p className="flex items-center justify-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                Feito com <span className="text-yellow-500 animate-bounce">💪</span> e React
+            </p>
         </footer>
       </div>
+      
+      <style>{`
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
