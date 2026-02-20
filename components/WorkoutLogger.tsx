@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { WorkoutPlan, WorkoutLog } from '../types';
 import PostWorkoutModal from './PostWorkoutModal';
-import { TrashIcon, PencilIcon, CheckCircleIcon, CircleIcon, ClockIcon, PlayIcon, PauseIcon, ArrowPathIcon, XCircleIcon, ArrowLeftIcon, DumbbellIcon, FireIcon } from './Icons';
+import { TrashIcon, PencilIcon, CheckCircleIcon, CircleIcon, ClockIcon, PlayIcon, PauseIcon, ArrowPathIcon, XCircleIcon, ArrowLeftIcon, DumbbellIcon, FireIcon, DocumentArrowDownIcon } from './Icons';
+import { generateWorkoutPDF } from '../utils/pdfGenerator';
 
 interface WorkoutLoggerProps {
   workoutPlans: WorkoutPlan[];
@@ -301,10 +302,10 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ workoutPlans, addWorkoutL
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {workoutPlans.map(plan => (
+                    <div key={plan.id} className="relative group">
                     <button
-                        key={plan.id}
                         onClick={() => handleSelectPlan(plan.id)}
-                        className="group relative overflow-hidden bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/10 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="w-full h-full relative overflow-hidden bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/10 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                             <DumbbellIcon className="w-24 h-24 transform rotate-12" />
@@ -327,6 +328,17 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ workoutPlans, addWorkoutL
                         </div>
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-sky-500 to-emerald-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                     </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            generateWorkoutPDF(plan);
+                        }}
+                        className="absolute top-4 right-4 p-2 bg-slate-700/50 hover:bg-sky-600 text-slate-300 hover:text-white rounded-full transition-all z-20 opacity-0 group-hover:opacity-100"
+                        title="Baixar PDF"
+                    >
+                        <DocumentArrowDownIcon className="h-5 w-5" />
+                    </button>
+                    </div>
                 ))}
             </div>
         </div>
@@ -355,6 +367,9 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ workoutPlans, addWorkoutL
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button onClick={() => generateWorkoutPDF(selectedPlan)} className="p-2 text-slate-400 hover:text-sky-400 transition-colors" title="Baixar PDF">
+                        <DocumentArrowDownIcon className="h-5 w-5"/>
+                    </button>
                     <button onClick={() => onEditPlan(selectedPlan.id)} className="p-2 text-slate-400 hover:text-sky-400 transition-colors" title="Editar">
                         <PencilIcon className="h-5 w-5"/>
                     </button>

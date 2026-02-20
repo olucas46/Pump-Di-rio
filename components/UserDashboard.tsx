@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { WorkoutPlan, WorkoutLog } from '../types';
-import useLocalStorage from '../hooks/useLocalStorage';
+import { api } from '../services/api';
 import WorkoutCreator from './WorkoutCreator';
 import WorkoutLogger from './WorkoutLogger';
 import WorkoutHistory from './WorkoutHistory';
@@ -18,9 +18,29 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ currentUser, onLogout }) 
   const [view, setView] = useState<View>('logger');
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   
-  // Use user-prefixed keys for isolation
-  const [workoutPlans, setWorkoutPlans] = useLocalStorage<WorkoutPlan[]>(`${currentUser}_workoutPlans`, []);
-  const [workoutLogs, setWorkoutLogs] = useLocalStorage<WorkoutLog[]>(`${currentUser}_workoutLogs`, []);
+  const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
+  const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data on mount or user change
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [plans, logs] = await Promise.all([
+          api.getPlans(currentUser),
+          api.getLogs(currentUser)
+        ]);
+        setWorkoutPlans(plans);
+        setWorkoutLogs(logs);
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [currentUser]);
 
   // For Date and Time
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
@@ -55,36 +75,67 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ currentUser, onLogout }) 
 
   const motivationalQuote = useMemo(() => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)], [motivationalQuotes]);
 
-  const addWorkoutPlan = useCallback((plan: Omit<WorkoutPlan, 'id'>) => {
+  const addWorkoutPlan = useCallback(async (plan: Omit<WorkoutPlan, 'id'>) => {
     const newPlan = { ...plan, id: crypto.randomUUID() };
-    setWorkoutPlans(prevPlans => [...prevPlans, newPlan]);
-    setView('logger');
-  }, [setWorkoutPlans]);
+    try {
+      await api.createPlan(currentUser, newPlan);
+      setWorkoutPlans(prevPlans => [newPlan, ...prevPlans]); // Prepend for immediate feedback, though fetch order is DESC
+      setView('logger');
+    } catch (error) {
+      console.error("Failed to add plan", error);
+      alert("Erro ao salvar o plano. Tente novamente.");
+    }
+  }, [currentUser]);
 
-  const updateWorkoutPlan = useCallback((updatedPlan: WorkoutPlan) => {
-    setWorkoutPlans(prevPlans =>
-        prevPlans.map(p => (p.id === updatedPlan.id ? updatedPlan : p))
-    );
-    setEditingPlanId(null);
-    setView('logger');
-  }, [setWorkoutPlans]);
+  const updateWorkoutPlan = useCallback(async (updatedPlan: WorkoutPlan) => {
+    try {
+      await api.updatePlan(updatedPlan);
+      setWorkoutPlans(prevPlans =>
+          prevPlans.map(p => (p.id === updatedPlan.id ? updatedPlan : p))
+      );
+      setEditingPlanId(null);
+      setView('logger');
+    } catch (error) {
+      console.error("Failed to update plan", error);
+      alert("Erro ao atualizar o plano. Tente novamente.");
+    }
+  }, []);
 
-  const addWorkoutLog = useCallback((log: WorkoutLog) => {
-    setWorkoutLogs(prevLogs => [log, ...prevLogs]);
-  }, [setWorkoutLogs]);
+  const addWorkoutLog = useCallback(async (log: WorkoutLog) => {
+    try {
+      await api.createLog(currentUser, log);
+      setWorkoutLogs(prevLogs => [log, ...prevLogs]);
+    } catch (error) {
+      console.error("Failed to add log", error);
+      alert("Erro ao salvar o treino. Tente novamente.");
+    }
+  }, [currentUser]);
   
-  const updateWorkoutLog = useCallback((logId: string, updates: Partial<Pick<WorkoutLog, 'comments' | 'rating'>>) => {
-    setWorkoutLogs(prevLogs =>
-      prevLogs.map(log =>
-        log.id === logId ? { ...log, ...updates } : log
-      )
-    );
-  }, [setWorkoutLogs]);
+  const updateWorkoutLog = useCallback(async (logId: string, updates: Partial<Pick<WorkoutLog, 'comments' | 'rating'>>) => {
+    try {
+      await api.updateLog(logId, updates);
+      setWorkoutLogs(prevLogs =>
+        prevLogs.map(log =>
+          log.id === logId ? { ...log, ...updates } : log
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update log", error);
+      alert("Erro ao atualizar o treino. Tente novamente.");
+    }
+  }, []);
 
 
-  const deleteWorkoutPlan = useCallback((planId: string) => {
-    setWorkoutPlans(prevPlans => prevPlans.filter(p => p.id !== planId));
-  }, [setWorkoutPlans]);
+  const deleteWorkoutPlan = useCallback(async (planId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este plano?")) return;
+    try {
+      await api.deletePlan(planId);
+      setWorkoutPlans(prevPlans => prevPlans.filter(p => p.id !== planId));
+    } catch (error) {
+      console.error("Failed to delete plan", error);
+      alert("Erro ao excluir o plano. Tente novamente.");
+    }
+  }, []);
 
   const handleEditPlan = (planId: string) => {
     setEditingPlanId(planId);
@@ -235,7 +286,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ currentUser, onLogout }) 
 
         {/* View Content */}
         <main className="animate-fade-in transition-all duration-300">
-            {renderView()}
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+              </div>
+            ) : (
+              renderView()
+            )}
         </main>
 
         <footer className="text-center mt-16 pb-6 text-slate-500 text-sm font-medium">
