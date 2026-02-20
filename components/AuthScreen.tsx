@@ -8,13 +8,17 @@ interface AuthScreenProps {
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
 
     if (!username.trim() || !password.trim()) {
         setError('Preencha todos os campos.');
@@ -23,6 +27,28 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
     const users = JSON.parse(localStorage.getItem('pump_users') || '[]');
     
+    if (isResettingPassword) {
+        if (password !== confirmPassword) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+        
+        const userIndex = users.findIndex((u: any) => u.username === username);
+        if (userIndex === -1) {
+            setError('Usuário não encontrado.');
+            return;
+        }
+        
+        users[userIndex].password = password;
+        localStorage.setItem('pump_users', JSON.stringify(users));
+        setSuccessMessage('Senha alterada com sucesso! Faça login.');
+        setIsResettingPassword(false);
+        setPassword('');
+        setConfirmPassword('');
+        // Keep username filled
+        return;
+    }
+
     if (isRegistering) {
         if (users.find((u: any) => u.username === username)) {
             setError('Usuário já existe.');
@@ -59,7 +85,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     Pump<span className="text-sky-500">Diário</span>
                 </h1>
                 <p className="text-slate-400 text-sm mt-2">
-                    {isRegistering ? 'Crie sua conta e comece a evoluir' : 'Bem-vindo de volta, monstro!'}
+                    {isResettingPassword 
+                        ? 'Redefina sua senha' 
+                        : (isRegistering ? 'Crie sua conta e comece a evoluir' : 'Bem-vindo de volta, monstro!')}
                 </p>
             </div>
 
@@ -81,7 +109,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Senha</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">
+                        {isResettingPassword ? 'Nova Senha' : 'Senha'}
+                    </label>
                     <input
                         type="password"
                         value={password}
@@ -91,9 +121,40 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     />
                 </div>
 
+                {isResettingPassword && (
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Confirmar Nova Senha</label>
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="block w-full px-4 bg-slate-900/50 border border-slate-600 rounded-xl py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                            placeholder="••••••••"
+                        />
+                    </div>
+                )}
+
+                {!isRegistering && !isResettingPassword && (
+                    <div className="flex justify-end">
+                        <button 
+                            type="button"
+                            onClick={() => { setIsResettingPassword(true); setError(''); setSuccessMessage(''); }}
+                            className="text-sm text-sky-400 hover:text-sky-300 transition-colors"
+                        >
+                            Esqueci minha senha
+                        </button>
+                    </div>
+                )}
+
                 {error && (
                     <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                         {error}
+                    </div>
+                )}
+                
+                {successMessage && (
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center">
+                        {successMessage}
                     </div>
                 )}
 
@@ -101,19 +162,30 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     type="submit"
                     className="w-full bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-sky-900/30 transform transition-all active:scale-[0.98] mt-2"
                 >
-                    {isRegistering ? 'Criar Conta' : 'Entrar'}
+                    {isResettingPassword ? 'Redefinir Senha' : (isRegistering ? 'Criar Conta' : 'Entrar')}
                 </button>
             </form>
 
             <div className="mt-6 text-center">
                 <p className="text-slate-400 text-sm">
-                    {isRegistering ? 'Já tem uma conta?' : 'Não tem uma conta?'}
-                    <button
-                        onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-                        className="ml-2 text-sky-400 hover:text-sky-300 font-semibold transition-colors"
-                    >
-                        {isRegistering ? 'Entrar' : 'Cadastre-se'}
-                    </button>
+                    {isResettingPassword ? (
+                        <button
+                            onClick={() => { setIsResettingPassword(false); setError(''); setSuccessMessage(''); }}
+                            className="text-sky-400 hover:text-sky-300 font-semibold transition-colors"
+                        >
+                            Voltar para o Login
+                        </button>
+                    ) : (
+                        <>
+                            {isRegistering ? 'Já tem uma conta?' : 'Não tem uma conta?'}
+                            <button
+                                onClick={() => { setIsRegistering(!isRegistering); setError(''); setSuccessMessage(''); }}
+                                className="ml-2 text-sky-400 hover:text-sky-300 font-semibold transition-colors"
+                            >
+                                {isRegistering ? 'Entrar' : 'Cadastre-se'}
+                            </button>
+                        </>
+                    )}
                 </p>
             </div>
         </div>
