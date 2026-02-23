@@ -4,6 +4,7 @@ import { WorkoutPlan, WorkoutLog } from '../types';
 import PostWorkoutModal from './PostWorkoutModal';
 import { TrashIcon, PencilIcon, CheckCircleIcon, CircleIcon, ClockIcon, PlayIcon, PauseIcon, ArrowPathIcon, XCircleIcon, ArrowLeftIcon, DumbbellIcon, FireIcon, DocumentArrowDownIcon } from './Icons';
 import { generateWorkoutPDF } from '../utils/pdfGenerator';
+import { generateUUID } from '../utils/uuid';
 
 interface WorkoutLoggerProps {
   workoutPlans: WorkoutPlan[];
@@ -245,7 +246,7 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ workoutPlans, addWorkoutL
         } : undefined;
 
         const newLog: WorkoutLog = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           planId: plan.id,
           planName: plan.name,
           date: new Date().toISOString(),

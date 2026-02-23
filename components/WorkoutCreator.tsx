@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { WorkoutPlan, Exercise, Cardio } from '../types';
 import { PlusIcon, TrashIcon } from './Icons';
+import { generateUUID } from '../utils/uuid';
 
 type EditableExercise = Omit<Exercise, 'id'> & { tempId: string; id?: string };
 
@@ -12,7 +13,7 @@ interface WorkoutCreatorProps {
 }
 
 const createEmptyExercise = (): EditableExercise => ({
-    tempId: crypto.randomUUID(),
+    tempId: generateUUID(),
     muscle: '',
     name: '',
     sets: '3',
@@ -99,7 +100,7 @@ const WorkoutCreator: React.FC<WorkoutCreatorProps> = ({ addWorkoutPlan, planToE
     if (planName.trim() && exercises.every(ex => ex.name.trim())) {
       const finalExercises: Exercise[] = exercises.map(({ tempId, ...rest }) => ({
         ...rest,
-        id: rest.id || crypto.randomUUID(),
+        id: rest.id || generateUUID(),
       }));
 
       const planPayload: Omit<WorkoutPlan, 'id'> = {

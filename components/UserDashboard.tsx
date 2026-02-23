@@ -6,6 +6,7 @@ import WorkoutLogger from './WorkoutLogger';
 import WorkoutHistory from './WorkoutHistory';
 import Evolution from './Evolution';
 import { ClipboardListIcon, HistoryIcon, PlusIcon, ChartBarIcon, BoltIcon, LogoutIcon, UserIcon } from './Icons';
+import { generateUUID } from '../utils/uuid';
 
 type View = 'creator' | 'logger' | 'history' | 'evolution';
 
@@ -76,7 +77,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ currentUser, onLogout }) 
   const motivationalQuote = useMemo(() => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)], [motivationalQuotes]);
 
   const addWorkoutPlan = useCallback(async (plan: Omit<WorkoutPlan, 'id'>) => {
-    const newPlan = { ...plan, id: crypto.randomUUID() };
+    const newPlan = { ...plan, id: generateUUID() };
     try {
       await api.createPlan(currentUser, newPlan);
       setWorkoutPlans(prevPlans => [newPlan, ...prevPlans]); // Prepend for immediate feedback, though fetch order is DESC
