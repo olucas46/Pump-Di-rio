@@ -491,12 +491,13 @@ const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({ workoutPlans, addWorkoutL
                     </div>
                     <div className="grid grid-cols-3 gap-3 pl-12">
                         <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-600 focus-within:border-sky-500">
-                             <label className="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Tempo (min)</label>
+                             <label className="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Tempo</label>
                              <input
-                                type="number"
+                                type="text"
                                 value={sessionCardioDetails.duration}
                                 onChange={(e) => handleCardioDetailsChange('duration', e.target.value)}
                                 disabled={isCardioCompleted}
+                                placeholder="00:00"
                                 className="w-full bg-transparent border-none p-0 text-white font-bold text-sm focus:ring-0"
                             />
                         </div>

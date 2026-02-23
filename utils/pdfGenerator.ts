@@ -51,7 +51,7 @@ export const generateWorkoutPDF = (plan: WorkoutPlan) => {
 
     const cardioData = [
       ["Tipo", plan.cardio.type],
-      ["Duração", `${plan.cardio.duration} min`],
+      ["Duração", plan.cardio.duration],
       ["Distância", plan.cardio.distance ? `${plan.cardio.distance} km` : '-'],
       ["Calorias", plan.cardio.calories ? `${plan.cardio.calories} kcal` : '-']
     ];

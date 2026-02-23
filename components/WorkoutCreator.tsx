@@ -172,7 +172,7 @@ const WorkoutCreator: React.FC<WorkoutCreatorProps> = ({ addWorkoutPlan, planToE
             <h3 className="font-semibold text-slate-200">Cardio</h3>
             <div className="flex flex-col sm:flex-row gap-4">
                 <InputField label="Tipo de Cardio" placeholder="Ex: Corrida na esteira" value={cardio.type} onChange={e => handleCardioChange('type', e.target.value)} />
-                <InputField label="Duração Planejada" placeholder="Ex: 20 min" value={cardio.duration} onChange={e => handleCardioChange('duration', e.target.value)} />
+                <InputField label="Duração Planejada" placeholder="Ex: 00:30" value={cardio.duration} onChange={e => handleCardioChange('duration', e.target.value)} />
                 <InputField 
                     label="Distância Planejada (km)" 
                     placeholder="Ex: 5,5" 

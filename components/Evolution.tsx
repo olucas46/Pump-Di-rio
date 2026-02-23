@@ -230,6 +230,35 @@ const Evolution: React.FC<{ workoutLogs: WorkoutLog[] }> = ({ workoutLogs }) => 
         const monthlyCardio: Record<string, number> = {};
         let totalDuration = 0;
     
+        const parseDurationToMinutes = (durationStr: string): number => {
+            if (!durationStr) return 0;
+            const str = durationStr.toLowerCase().trim();
+
+            // Handle HH:MM format
+            if (str.includes(':')) {
+                const parts = str.split(':');
+                if (parts.length === 2) {
+                    const hours = parseInt(parts[0], 10) || 0;
+                    const minutes = parseInt(parts[1], 10) || 0;
+                    return hours * 60 + minutes;
+                }
+            }
+
+            // Handle 1h 30m format
+            let totalMinutes = 0;
+            const hoursMatch = str.match(/(\d+)\s*h/);
+            const minutesMatch = str.match(/(\d+)\s*m/);
+
+            if (hoursMatch) totalMinutes += parseInt(hoursMatch[1], 10) * 60;
+            if (minutesMatch) totalMinutes += parseInt(minutesMatch[1], 10);
+
+            if (totalMinutes > 0) return totalMinutes;
+
+            // Fallback: treat as raw minutes if just a number
+            const raw = parseFloat(str.replace(',', '.'));
+            return isNaN(raw) ? 0 : raw;
+        };
+
         workoutLogs.forEach(log => {
             if (log.cardio && log.cardioCompleted) {
                 const date = new Date(log.date);
@@ -237,9 +266,8 @@ const Evolution: React.FC<{ workoutLogs: WorkoutLog[] }> = ({ workoutLogs }) => 
     
                 if (!monthlyCardio[yearMonth]) monthlyCardio[yearMonth] = 0;
     
-                const durationString = log.cardio.duration || '';
-                const duration = parseFloat(durationString.replace(',', '.')) || 0;
-                if (!isNaN(duration)) {
+                const duration = parseDurationToMinutes(log.cardio.duration || '');
+                if (duration > 0) {
                     monthlyCardio[yearMonth] += duration;
                     totalDuration += duration;
                 }
